@@ -18,7 +18,7 @@
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.js"></script>
     <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.css" rel="stylesheet">
-    <link href="./resources/style.css" rel="stylesheet">
+    <link href="./resources/style.css?v2" rel="stylesheet">
     <link href="./resources/abcLogo64.png" rel="icon">
   </head>
   <body>
@@ -41,12 +41,15 @@
                 species: d.species
               }
             };
+          })
+          .filter(function(d) {
+            return d.properties.species == "kangaroo" || d.properties.species == "wombat";
           });
         // set up MapBox engine
         mapboxgl.accessToken = "pk.eyJ1IjoibmV3cy1vbjFpbmUiLCJhIjoiR3FlZFZlVSJ9._30EFE9XYhQitqf4gzRG-g";
         map = new mapboxgl.Map({
           container: "map",
-          style: "mapbox://styles/mapbox/dark-v10",
+          style: "mapbox://styles/mapbox/outdoors-v11",
           center: [149.126944, -35.293056],
           attributionControl: false,
           zoom: 11,
@@ -85,7 +88,6 @@
             .selectAll(".kill")
               .data(wildlifeData)
             .enter().append("path")
-              .attr("class", function(d) { return d.properties.species; })
               .classed("kill", true);
           // re-render SVGs upon movement
           map.on("viewreset", render)
