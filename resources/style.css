@@ -41,19 +41,5 @@ body {
 }
 .kill {
   opacity: .15;
-}
-.kangaroo {
-  fill: #01CFFF;
-}
-.wombat {
   fill: #FF6100;
-}
-.other {
-  fill: #00B395;
-}
-.wallaby {
-  fill: #FFB300;
-}
-.wallaroo {
-  fill: #248BC9;
 }
