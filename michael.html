@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-155991615-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-155991615-1');
+    </script>
+    <!-- my stuff -->
+    <meta charset="utf-8">
+    <title>Canberra roadkill</title>
+    <meta name="author" content="Markus Mannheim">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Initial scripts -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.js"></script>
+    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.css" rel="stylesheet">
+    <link href="./resources/styleMichael.css" rel="stylesheet">
+    <link href="./resources/abcLogo64.png" rel="icon">
+  </head>
+  <body>
+    <!-- Initial page layout -->
+    <div id="map"></div>
+    <div id="ticker"></div>
+    <script>
+      // load data
+      d3.json("./resources/wildlife.geojson", function(error, data) {
+        if (error) throw error;
+        wildlifeData = data;
+        // date variables
+        days = d3.timeDay
+          .range(new Date("2015-12-04"), new Date("2019-05-31"))
+          .map(function(d) { return d3.timeFormat("%Y-%m-%d")(d); });
+        day = 0;
+        ticker = d3.select("#ticker");
+        ticker.text("Dec 2015");
+        // set up MapBox engine
+        mapboxgl.accessToken = "pk.eyJ1IjoibmV3cy1vbjFpbmUiLCJhIjoiR3FlZFZlVSJ9._30EFE9XYhQitqf4gzRG-g";
+        map = new mapboxgl.Map({
+          container: "map",
+          style: "mapbox://styles/mapbox/outdoors-v11",
+          center: [149.126944, -35.293056],
+          attributionControl: false,
+          zoom: 9,
+          interactive: false
+        });
+        // add navigation and custom attribution
+        map.on("load", function() {
+          map.addControl(new mapboxgl.AttributionControl({
+              compact: true
+            }))
+            .resize();
+          let attribution = d3.select(".mapboxgl-ctrl-attrib-inner");
+          attribution.html("&copy; ACT Government <a href='https://creativecommons.org/licenses/by/4.0/'>(CC BY 4.0)</a> | " + attribution.html());
+          attribution.html(attribution.html().slice(0, -250));
+          // svg layer
+          container = map.getCanvasContainer();
+          svg = d3.select(container)
+            .append("svg")
+            .attr("id", "svg");
+          svgGroup = svg
+            .append("g")
+            .attr("id", "svgGroup");
+          // map calculations
+          margin = { top: 16, bottom: 16, left: 16, right: 16 };
+          projection = calcProjection();
+          path = d3.geoPath()
+            .pointRadius(width < 500 ? 2.5 : 5);
+          // re-render SVGs upon movement
+          map.on("viewreset", render)
+            .on("move", render)
+            .on("move", render);
+          render();
+          // re-render SVGs upon movement
+          map.fitBounds(d3.geoBounds(wildlifeData), {
+            padding: {
+              top: width < 500 ? -100 : -200,
+              bottom: width < 500 ? -200 : -400,
+              left: width < 500 ? -200 : -400,
+              right: width < 500 ? -250 : -500
+            }
+          });
+          d3.timeout(timer, 2000);
+        });
+      });
+
+      // begin animation
+      function timer() {
+        interval = d3.interval(function() {
+          ticker.text(d3.timeFormat("%b %Y")(d3.timeParse("%Y-%m-%d")(days[day])));
+          drawWildlife();
+          if (days[day] !== "2019-05-31") {
+            day++;
+          } else {
+            interval.stop();
+            day = 0;
+            d3.timeout(timer, 2000);
+          }
+        }, 50);
+      }
+
+      // wildlife circles
+      function drawWildlife() {
+        wildlife = svgGroup
+          .selectAll(".wildlife")
+            .data(wildlifeData.features.filter(function(d) { return d.properties.date == days[day]; }), function(d) { return d.geometry.coordinates[1] + " " + d.properties.date; });
+        entering = wildlife
+          .enter().append("path")
+            .classed("wildlife", true)
+            .style("opacity", 1)
+            .attr("d", path)
+            .transition()
+              .duration(2000)
+              .style("opacity", 0)
+            .remove();
+      }
+
+      // re-renders SVG when map moves
+      function render() {
+        projection = calcProjection();
+        path.projection(projection);
+        // draw SVGs
+        d3.selectAll(".wildlife")
+          .attr("d", path);
+      }
+      // recalculates D3 map projection when map moves
+      function calcProjection() {
+        height = document.body.getBoundingClientRect().height;
+        width = document.body.getBoundingClientRect().width;
+        center = map.getCenter();
+        zoom = map.getZoom();
+        scale = 256 / Math.PI * Math.pow(2, zoom);
+        return d3.geoMercator()
+          .center([center.lng, center.lat])
+          .translate([width / 2, height / 2])
+          .scale(scale);
+      }
+    </script>
+  </body>
+</html>
