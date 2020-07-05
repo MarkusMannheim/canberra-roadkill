@@ -89,19 +89,17 @@
 
       // begin animation
       function timer() {
-        ticker.text(d3.timeFormat("%b %Y")(d3.timeParse("%Y-%m-%d")(days[day])));
-        drawWildlife();
-        if (days[day] !== "2019-05-31") {
-          d3.timeout(function() {
+        interval = d3.interval(function() {
+          ticker.text(d3.timeFormat("%b %Y")(d3.timeParse("%Y-%m-%d")(days[day])));
+          drawWildlife();
+          if (days[day] !== "2019-05-31") {
             day++;
-            timer();
-          }, 25);
-        } else {
-          d3.timeout(function() {
+          } else {
+            interval.stop();
             day = 0;
-            timer();
-          }, 2000);
-        }
+            d3.timeout(timer, 2000);
+          }
+        }, 25);
       }
 
       // wildlife circles
@@ -109,15 +107,15 @@
         wildlife = svgGroup
           .selectAll(".wildlife")
             .data(wildlifeData.features.filter(function(d) { return d.properties.date == days[day]; }), function(d) { return d.geometry.coordinates[1] + " " + d.properties.date; });
-        exiting = wildlife
-          .exit().transition()
-            .style("opacity", 0)
-          .remove();
         entering = wildlife
           .enter().append("path")
             .classed("wildlife", true)
             .style("opacity", 1)
-            .attr("d", path);
+            .attr("d", path)
+            .transition()
+              .duration(2000)
+              .style("opacity", 0)
+            .remove();
       }
 
       // re-renders SVG when map moves
