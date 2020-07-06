@@ -42,9 +42,9 @@
         map = new mapboxgl.Map({
           container: "map",
           style: "mapbox://styles/mapbox/dark-v10",
-          center: [149.126944, -35.293056],
+          center: [149.106944, -35.323056],
           attributionControl: false,
-          zoom: 9,
+          zoom: document.body.getBoundingClientRect().width < 500 ? 9.75 : 10.25,
           interactive: false
         });
         // add navigation and custom attribution
@@ -74,15 +74,6 @@
             .on("move", render)
             .on("move", render);
           render();
-          // re-render SVGs upon movement
-          map.fitBounds(d3.geoBounds(wildlifeData), {
-            padding: {
-              top: width < 500 ? -100 : -200,
-              bottom: width < 500 ? -200 : -400,
-              left: width < 500 ? -200 : -400,
-              right: width < 500 ? -250 : -500
-            }
-          });
           d3.timeout(timer, 2000);
         });
       });
